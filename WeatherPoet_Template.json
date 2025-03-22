@@ -1,0 +1,249 @@
+{
+  "name": "WeatherPoet: AI-Powered Telegram Bot for Daily Weather Quotes",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&q=Berlin",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "850d465c-5ee9-444e-92d9-7c030a85cf48",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2d9ad18d-c376-4c8b-8a13-77f24b13b240",
+              "leftValue": "={{$json[\"current\"][\"condition\"][\"text\"]}}\n",
+              "rightValue": "Sunny",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "234801e2-fe90-4814-996f-46e7af16638c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a poetic assistant who shares short, beautiful weather-related quotes by real, famous poets from around the world. Depending on the weather, you will return one relevant quote with the poet\u2019s name. Avoid making up quotes. Keep the response short and formatted nicely.\n",
+              "role": "system"
+            },
+            {
+              "content": "Give me a beautiful short quote from a real poet about sunshine or sunny days."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        920,
+        -60
+      ],
+      "id": "a3c99e06-674a-4fc5-8493-e6b936c8d0cc",
+      "name": "OpenAI",
+      "credentials": {
+        "httpBasicAuth": "YOUR_OPENAI_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{$json[\"message\"][\"content\"]}}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1280,
+        -60
+      ],
+      "id": "38f0a5f6-2471-45e5-a1fc-0cbbdd8283ae",
+      "name": "Telegram",
+      "credentials": {
+        "telegramApi": "YOUR_TELEGRAM_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a poetic assistant who shares short, real quotes about rainy or cloudy weather by well-known poets. Avoid inventing quotes. Keep the output short and beautifully formatted.",
+              "role": "system"
+            },
+            {
+              "content": "Give me a short quote from a real poet about rainy or cloudy days."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        940,
+        260
+      ],
+      "id": "3aacd3e1-b32d-45c5-bd98-2d352067cd7c",
+      "name": "OpenAI1",
+      "credentials": {
+        "httpBasicAuth": "YOUR_OPENAI_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json[\"message\"][\"content\"] }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        260
+      ],
+      "id": "5fb282bf-f853-4575-beea-3e512453e162",
+      "name": "Telegram1",
+    
+      "credentials": {
+        "telegramApi": "YOUR_TELEGRAM_CREDENTIALS"
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        60
+      ],
+      "id": "1bf3dd4a-db4e-484b-a698-f5f09ee26ad2",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "696541c7-c43d-42b5-a944-58ca591b4c25",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+  },
+  "id": "r3Vcv6brrAhItvXm",
+  "tags": []
+}
